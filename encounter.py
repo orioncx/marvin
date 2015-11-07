@@ -244,8 +244,9 @@ class EnWatcher:
         try:
             lid = page.xpath('//input[@type="hidden"][@name="LevelId"]/@value')[0]
             lnum = page.xpath('//input[@type="hidden"][@name="LevelNumber"]/@value')[0]
-        except IndexError:
+        except:
             self.l.input_blocked = True
+
 
         blockage = len(page.cssselect('.blockageinfo'))
 

@@ -78,7 +78,7 @@ class Messenger:
         self.storage = []
 
     def clear_photo_storage(self):
-        self.storage = []
+        self.photo_storage = []
 
     def add_to_storage(self,u):
         if self.logined and self.chat_id:
@@ -86,7 +86,7 @@ class Messenger:
 
     def add_to_photo_storage(self,u):
         if self.logined and self.chat_id:
-            self.storage.append(u.message)
+            self.photo_storage.append(u.message)
 
     def get_storage(self):
         if self.logined and self.chat_id:
@@ -95,7 +95,7 @@ class Messenger:
 
     def get_photo_storage(self):
         if self.logined and self.chat_id:
-            for message in self.storage:
+            for message in self.photo_storage:
                 self.bot.forwardMessage(self.chat_id, message.chat_id, message.message_id)
 
     def send_message_to_owner(self, msg):
@@ -218,7 +218,7 @@ class Messenger:
         if text.startswith(u'/photos'):
             if self.logined and self.chat_id:
                 if len(self.storage):
-                    self.get_storage()
+                    self.get_photo_storage()
                 else:
                     self.send_message(u'Нет фоток на этом уровне')
             return
@@ -271,10 +271,10 @@ class Messenger:
                 self.send_message(r)
             return
 
-        if text.startswith(u'/c') or text.startswith(u'/с') or text.startswith(u',к'):
+        if text.startswith(u'/c') or text.startswith(u'/с') or text.startswith(u',к') or text.startswith(u', к'):
             if self.logined and chat_id == self.chat_id:
                 try:
-                    raw_text = text.replace(u'/c', '').replace(u'/с', '').replace(u',к', '').strip()
+                    raw_text = text.replace(u'/c', '').replace(u'/с', '').replace(u',к', '').replace(u', к', '').strip()
                     answers = raw_text.split(' ')
                     result_str = ''
                     for a in answers:
@@ -288,10 +288,10 @@ class Messenger:
                 except Exception as e:
                     self.send_message_to_owner('Error code input %s %s' % (e.message,text))
 
-        if text.startswith(u'/a') or text.startswith(u'/а') or text.startswith(u',о'):
+        if text.startswith(u'/a') or text.startswith(u'/а') or text.startswith(u',о') or text.startswith(u', о'):
             if self.logined and chat_id == self.chat_id:
                 try:
-                    raw_text = text.replace(u'/a', '').replace(u'/а', '').replace(u',о', '').strip()
+                    raw_text = text.replace(u'/a', '').replace(u'/а', '').replace(u',о', '').replace(u', о', '').strip()
                     answers = raw_text.split(' ')
                     result_str = ''
                     for a in answers:
@@ -305,20 +305,20 @@ class Messenger:
                 except Exception as e:
                     self.send_message_to_owner('Error code input %s %s' % (e.message,text))
 
-        if text.startswith(u'/s') or text.startswith(u',п'):
+        if text.startswith(u'/s') or text.startswith(u',п') or text.startswith(u', п'):
             if self.logined and chat_id == self.chat_id:
                 try:
-                    raw_text = text.replace(u'/s', '').replace(u',п', '').strip()
+                    raw_text = text.replace(u'/s', '').replace(u',п', '').replace(u', п', '').strip()
                     lr = self.en_watcher.input_answer(raw_text)
                     if lr and lr['success']:
                         self.send_message('"%s"%s ' % (raw_text, '+' if lr['correct'] else '-'))
                 except Exception as e:
                     self.send_message_to_owner('Error code input %s %s' % (e.message,text))
 
-        if text.startswith(u'/b') or text.startswith(u',б'):
+        if text.startswith(u'/b') or text.startswith(u',б') or text.startswith(u', б'):
             if self.logined and chat_id == self.chat_id:
                 try:
-                    raw_text = text.replace(u'/b', '').replace(u',б', '').strip()
+                    raw_text = text.replace(u'/b', '').replace(u',б', '').replace(u', б', '').strip()
                     lr = self.en_watcher.input_bonus_answer(raw_text)
                     if lr and lr['success']:
                         self.send_message('"%s"%s ' % (raw_text, '+' if lr['correct'] else '-'))
