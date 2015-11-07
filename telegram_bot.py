@@ -103,7 +103,6 @@ class Messenger:
             self.send_message(msg, self.owner_id)
 
     def send_message(self, msg, chat_id=None):
-        print(msg)
         try:
             if msg:
                 self.bot.sendMessage(chat_id=chat_id or self.chat_id, text=msg, parse_mode=telegram.ParseMode.MARKDOWN)
@@ -224,6 +223,16 @@ class Messenger:
                     self.send_message(u'Нет фоток на этом уровне')
             return
 
+        if text.startswith(u'/help'):
+            if self.logined and self.chat_id:
+                self.send_message(u'\'/c\' или \',к\' - вбитие кода\n'+\
+                                  u'\'/a\' или \',о\' - вбитие кода на уровне с блокировкой\n'+\
+                                  u'\'/s\' или \',ц\' - вбитие кода с пробелами\n'+\
+                                  u'\'/r\' или \',з\' - запомнить текст сообщения до конца уровня\n'+\
+                                  u'пробел между командой и аргументом не обязателен'
+                                  )
+            return
+
         if text.startswith(u'/task'):
             if self.logined and self.chat_id:
                 self.send_message(self.en_watcher.l.task)
@@ -269,7 +278,6 @@ class Messenger:
                     answers = raw_text.split(' ')
                     result_str = ''
                     for a in answers:
-                        print(a)
                         if a.lower() in self.en_watcher.l.closed_sectors:
                             result_str += '"%s" %s' % (a, '\[:||||:]')
                         else:
@@ -287,7 +295,6 @@ class Messenger:
                     answers = raw_text.split(' ')
                     result_str = ''
                     for a in answers:
-                        print(a)
                         if a.lower() in self.en_watcher.l.closed_sectors:
                             result_str += '"%s"%s ' % (a, '[:||||:]')
                         else:
@@ -322,7 +329,6 @@ class Messenger:
             if msg:
                 self.add_to_storage(msg)
 
-        print(user_sent)
         # self.chat_id=msg.message.chat_id
         # self.last_update_id = msg.update_id
         # self.send_message(msg.message.text)

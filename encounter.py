@@ -168,7 +168,6 @@ class EnWatcher:
         return final_task
 
     def input_answer(self, answer, relogin=False, check_block=False, from_queue = False):
-        print(answer,from_queue)
         if not self.l.game_active:
             return {'success': False, 'correct': False, 'msg': u'Игра неактивна'}
         if check_block:
@@ -195,13 +194,11 @@ class EnWatcher:
                 return
         if r.text.find('color_incorrect') != -1:
             if from_queue:
-                print(u'Из очереди: "%s"-'%answer)
                 self.messenger.send_message(u'Из очереди: "%s"-'%answer)
             return {'success': True, 'correct': False, 'msg': u''}
 
         elif r.text[:r.text.find('jspVerticalBar')].find('color_correct') != -1:
             if from_queue:
-                print('Из очереди: "%s"-'%answer)
                 self.messenger.send_message(u'Из очереди: "%s"+'%answer)
             return {'success': True, 'correct': True, 'msg': u''}
         return None
