@@ -1,10 +1,7 @@
 # -*- encoding:utf8 -*-
 __author__ = 'orion'
 import time
-import datetime
-
 import requests
-import pika
 import json
 import random
 from conf import HEADERS

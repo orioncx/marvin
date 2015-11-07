@@ -3,7 +3,6 @@ import time
 from encounter import EnWatcher
 
 __author__ = 'orion'
-import pika
 import json
 import telegram
 import threading
