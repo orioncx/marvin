@@ -62,6 +62,7 @@ class LevelManager:
                 self.wather.clear_queue()
                 return
 
+
         if not answ_en:
             self.input_blocked = True
         else:
@@ -69,6 +70,10 @@ class LevelManager:
             self.wather.proc_queue()
 
             # up proc
+        if len(self.hints) < len(hints):
+            new_hints = hints[len(self.hints):]
+            for hint in new_hints:
+                self._send_msg(u"Подсказка:\n%s" % hint)
         self.hints = hints
         self.up_time_seconds = up_time_seconds
         self.opened_penalty_hints = opened_penalty_hints
