@@ -132,6 +132,7 @@ class Messenger:
         user_sent = msg.message.from_user.username
         text = msg.message.text
         chat_id = msg.message.chat_id
+        self.last_update_id = msg.update_id
 
         if text.startswith(u'/') or text.startswith(u','):
             pass
@@ -174,10 +175,92 @@ class Messenger:
             else:
                 self.send_message(u'Несоответствие уровня доступа.', chat_id)
 
+        if text.startswith(u'/stop'):
+            if user_sent == OWNER:
+                self.send_message_to_owner(u'Отключаю слежение')
+                self.en_watcher.shutdown()
+                time.sleep(5)
+                self.chat_id = None
+                self.en_watcher = None
+                self.send_message_to_owner(u'Отключил слежение')
+            else:
+                self.send_message(u'Несоответствие уровня доступа.', chat_id)
+            return
+
+        if text.startswith(u'/sleep'):
+            if user_sent == OWNER:
+                self.upd_interval = 20
+                self.send_message(u'Замедляю интервал опроса до 20 сек.', chat_id)
+            else:
+                self.send_message(u'Несоответствие уровня доступа.', chat_id)
+            return
+
+        if text.startswith(u'/run'):
+            if user_sent == OWNER:
+                self.upd_interval = 0.01
+                self.send_message(u'Ускоряю интервал опроса до 0.01 сек.', chat_id)
+            else:
+                self.send_message(u'Несоответствие уровня доступа.', chat_id)
+            return
+
         if text.startswith(u'/clearqueue'):
             if self.logined and chat_id == self.chat_id:
                 self.en_watcher.clear_queue()
                 self.send_message(u'Очередь вбития очищена.')
+            return
+
+        if text.startswith(u'/memory'):
+            if self.logined and self.chat_id:
+                if len(self.storage):
+                    self.get_storage()
+                else:
+                    self.send_message(u'Ничего не помню')
+            return
+
+        if text.startswith(u'/photos'):
+            if self.logined and self.chat_id:
+                if len(self.storage):
+                    self.get_storage()
+                else:
+                    self.send_message(u'Нет фоток на этом уровне')
+            return
+
+        if text.startswith(u'/task'):
+            if self.logined and self.chat_id:
+                self.send_message(self.en_watcher.l.task)
+            return
+
+        if text.startswith(u'/timers'):
+            if self.logined and self.chat_id:
+                if len(self.en_watcher.l.all_timers):
+                    r = '\n'.join(self.en_watcher.l.all_timers)
+                else:
+                    r=u'На уровне нет ни одного отсчета.'
+                self.send_message(r)
+
+            return
+
+
+
+        if text.startswith(u'/hints'):
+            if self.logined and self.chat_id:
+                if len(self.en_watcher.l.hints) or len(self.en_watcher.l.opened_penalty_hints):
+                    r = '\n'.join(self.en_watcher.l.hints)
+                    if r:
+                        r += '\n'
+                    r += '\n'.join(self.en_watcher.l.opened_penalty_hints)
+                else:
+                    r = u'На уровне нет открытых подсказок.'
+                self.send_message(r)
+            return
+
+        if text.startswith(u'/bonuses'):
+            if self.logined and self.chat_id:
+                if len(self.en_watcher.l.closed_bonuses):
+                    r = '\n'.join(self.en_watcher.l.closed_bonuses)
+                else:
+                    r = u'На уровне нет открытых бонусов.'
+                self.send_message(r)
             return
 
         if text.startswith(u'/c') or text.startswith(u'/с') or text.startswith(u',к'):
@@ -188,9 +271,12 @@ class Messenger:
                     result_str = ''
                     for a in answers:
                         print(a)
-                        lr = self.en_watcher.input_answer(a, check_block=True)
-                        if lr and lr['success']:
-                            result_str += '"%s"%s ' % (a, '+' if lr['correct'] else '-')
+                        if a.lower() in self.en_watcher.l.closed_sectors:
+                            result_str += '"%s" %s' % (a, '\[:||||:]')
+                        else:
+                            lr = self.en_watcher.input_answer(a, check_block=True)
+                            if lr and lr['success']:
+                                result_str += '"%s"%s ' % (a, '+' if lr['correct'] else '-')
                     self.send_message(result_str)
                 except Exception as e:
                     self.send_message_to_owner('Error code input %s %s' % (e.message,text))
@@ -203,9 +289,12 @@ class Messenger:
                     result_str = ''
                     for a in answers:
                         print(a)
-                        lr = self.en_watcher.input_answer(a)
-                        if lr and lr['success']:
-                            result_str += '"%s"%s ' % (a, '+' if lr['correct'] else '-')
+                        if a.lower() in self.en_watcher.l.closed_sectors:
+                            result_str += '"%s"%s ' % (a, '[:||||:]')
+                        else:
+                            lr = self.en_watcher.input_answer(a)
+                            if lr and lr['success']:
+                                result_str += '"%s"%s ' % (a, '+' if lr['correct'] else '-')
                     self.send_message(result_str)
                 except Exception as e:
                     self.send_message_to_owner('Error code input %s %s' % (e.message,text))
@@ -231,25 +320,12 @@ class Messenger:
                     self.send_message_to_owner('Error code input %s %s' % (e.message,text))
 
         if text.startswith(u'/r') or text.startswith(u',з'):
-            self.add_to_storage(msg)
-
-        if text.startswith(u'/memory'):
-            if self.logined and self.chat_id:
-                if len(self.storage):
-                    self.get_storage()
-                else:
-                    self.send_message(u'Ничего не помню')
-
-        if text.startswith(u'/photos'):
-            if self.logined and self.chat_id:
-                if len(self.storage):
-                    self.get_storage()
-                else:
-                    self.send_message(u'Нет фоток на этом уровне')
+            if msg:
+                self.add_to_storage(msg)
 
         print(user_sent)
         # self.chat_id=msg.message.chat_id
-        self.last_update_id = msg.update_id
+        # self.last_update_id = msg.update_id
         # self.send_message(msg.message.text)
 
     def _run_updater(self):

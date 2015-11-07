@@ -24,6 +24,9 @@ class LevelManager:
         self.game_active = False
 
         self.auto_up_time = None
+        self.up_notification_5min_sent = False
+        self.up_notification_1min_sent = False
+        self.up_time_seconds = None
 
         self.current_level_num = 0
         self.unclosed_sect_count = 1
@@ -42,18 +45,20 @@ class LevelManager:
 
     def set_level(self, lid, lnum, task, hints, opened_penalty_hints, closed_bonuses, closed_sectors,
                          unclosed_sect_count, answ_en, all_timers, up_time_seconds, blockage):
+        first_run=True
         if lid and lnum:
+            if self.level_id:
+                    first_run=False
             if self.level_id != lid:
-                started=False
-                if self.level_id:
-                    started=True
+                self.up_time_seconds = None
+
                 self.game_started = True
                 self.game_active = True
                 self.level_id = lid
                 self.level_num = lnum
-                if started:
+                if not first_run:
                     self._send_msg(u'АП')
-                self._send_msg(task)
+                self._send_msg(u"Задание:\n%s"%task)
                 self.blockage = blockage
                 if blockage:
                     self._send_msg(BLOCK_MSG)
@@ -70,12 +75,21 @@ class LevelManager:
             self.wather.proc_queue()
 
             # up proc
-        if len(self.hints) < len(hints):
+        if len(self.hints) < len(hints) and not first_run:
             new_hints = hints[len(self.hints):]
             for hint in new_hints:
                 self._send_msg(u"Подсказка:\n%s" % hint)
         self.hints = hints
+
         self.up_time_seconds = up_time_seconds
+        if up_time_seconds:
+            if not self.up_notification_5min_sent and up_time_seconds <= (60 * 5) and up_time_seconds > 60 * 4.5:
+                self._send_msg(u"До апа осталось менее пяти минут")
+                self.up_notification_5min_sent = True
+            if not self.up_notification_1min_sent and up_time_seconds <= 60:
+                self._send_msg(u"До апа осталось менее минуты")
+                self.up_notification_1min_sent = True
+
         self.opened_penalty_hints = opened_penalty_hints
         self.closed_bonuses = closed_bonuses
         self.closed_sectors = closed_sectors
@@ -251,7 +265,7 @@ class EnWatcher:
             sectors_header = headers[0]
             headers = headers[1:]
             for sector in sectors_cont[0].cssselect('.color_correct'):
-                closed_sectors.append(sector.text_content())
+                closed_sectors.append(sector.text_content().lower())
             unclosed_sect_text = sectors_header.text_content()
             if u'закрыть' in unclosed_sect_text:
                 unclosed_sect_count = int(unclosed_sect_text[unclosed_sect_text.rfind(' ') + 1:unclosed_sect_text.rfind(')')])
