@@ -7,7 +7,8 @@ import pika
 import json
 import telegram
 import threading
-from conf import BOT_TOKEN, CHAT_ID, OWNER
+from conf import BOT_TOKEN, OWNER
+from telegram.error import TelegramError
 
 
 
@@ -60,7 +61,8 @@ class Messenger:
 
     def __init__(self):
         self.bot = telegram.Bot(token=BOT_TOKEN)
-        self.chat_id = CHAT_ID
+        self.chat_id = None
+        self.owner_id=None
         self.upd_interval = 0.1
         self.last_update_id = None
         self.game_params = load_params()
@@ -70,12 +72,48 @@ class Messenger:
 
         self._run_updater()
 
+        self.storage=[]
+        self.photo_storage=[]
+
+    def clear_storage(self):
+        self.storage = []
+
+    def clear_photo_storage(self):
+        self.storage = []
+
+    def add_to_storage(self,u):
+        if self.logined and self.chat_id:
+            self.storage.append(u.message)
+
+    def add_to_photo_storage(self,u):
+        if self.logined and self.chat_id:
+            self.storage.append(u.message)
+
+    def get_storage(self):
+        if self.logined and self.chat_id:
+            for message in self.storage:
+                self.bot.forwardMessage(self.chat_id, message.chat_id, message.message_id)
+
+    def get_photo_storage(self):
+        if self.logined and self.chat_id:
+            for message in self.storage:
+                self.bot.forwardMessage(self.chat_id, message.chat_id, message.message_id)
+
+    def send_message_to_owner(self, msg):
+        if msg and self.owner_id:
+            self.send_message(msg, self.owner_id)
+
     def send_message(self, msg, chat_id=None):
-        if msg:
-            print(msg)
-            print(self.chat_id)
-            print(chat_id)
-            self.bot.sendMessage(chat_id=chat_id or self.chat_id, text=msg, parse_mode=telegram.ParseMode.MARKDOWN)
+        print(msg)
+        try:
+            if msg:
+                self.bot.sendMessage(chat_id=chat_id or self.chat_id, text=msg, parse_mode=telegram.ParseMode.MARKDOWN)
+        except TelegramError:
+            if msg:
+                try:
+                    self.bot.sendMessage(chat_id=chat_id or self.chat_id, text=msg)
+                except:
+                    self.send_message_to_owner(u'cant send message')
 
     def set(self, text, chat_id):
         if len(text.split(' '))!=2:
@@ -95,6 +133,14 @@ class Messenger:
         text = msg.message.text
         chat_id = msg.message.chat_id
 
+        if text.startswith(u'/') or text.startswith(u','):
+            pass
+        else:
+            if msg.message.photo:
+                self.add_to_photo_storage(msg)
+            else:
+                return
+
         if text.startswith(u'/config'):
             if user_sent == OWNER:
                 if ' ' in text:
@@ -106,34 +152,100 @@ class Messenger:
                 self.send_message(u'Forbidden', chat_id)
 
         if text.startswith(u'/login'):
-            self.en_watcher = EnWatcher(self.game_params, self)
-            self.logined = self.en_watcher._login()
-            if self.logined:
-                self.send_message(u'Successfully logined', chat_id)
+            if user_sent == OWNER:
+                self.owner_id = chat_id
+                self.en_watcher = EnWatcher(self.game_params, self)
+                self.logined = self.en_watcher._login()
+                if self.logined:
+                    self.send_message(u'Successfully logined', chat_id)
+                else:
+                    self.send_message(u'Log in Fail =( check params', chat_id)
             else:
-                self.send_message(u'Log in Fail =( check params', chat_id)
+                self.send_message(u'Несоответствие уровня доступа.', chat_id)
 
         if text.startswith(u'/init'):
             if user_sent == OWNER:
                 if self.logined:
                     self.chat_id = chat_id
-                    self.send_message(u'Слежение запущено.')
                     self.en_watcher.start_refresher()
-
+                    self.send_message(u'Слежение запущено.')
                 else:
                     self.send_message(u'Сначала авторизация', chat_id)
             else:
                 self.send_message(u'Несоответствие уровня доступа.', chat_id)
 
-        if text.startswith(u'/c') or text.startswith(u'/с'):
-            raw_text = text.replace(u'/c', '').replace(u'/с', '').strip()
-            answers = raw_text.split(' ')
-            result_str=''
-            for a in answers:
-                lr = self.en_watcher.input_answer(a)
-                if lr and lr['success']:
-                    result_str += '"%s"%s ' % (a, '+' if lr['correct'] else '-')
-                self.send_message(result_str)
+        if text.startswith(u'/clearqueue'):
+            if self.logined and chat_id == self.chat_id:
+                self.en_watcher.clear_queue()
+                self.send_message(u'Очередь вбития очищена.')
+            return
+
+        if text.startswith(u'/c') or text.startswith(u'/с') or text.startswith(u',к'):
+            if self.logined and chat_id == self.chat_id:
+                try:
+                    raw_text = text.replace(u'/c', '').replace(u'/с', '').replace(u',к', '').strip()
+                    answers = raw_text.split(' ')
+                    result_str = ''
+                    for a in answers:
+                        print(a)
+                        lr = self.en_watcher.input_answer(a, check_block=True)
+                        if lr and lr['success']:
+                            result_str += '"%s"%s ' % (a, '+' if lr['correct'] else '-')
+                    self.send_message(result_str)
+                except Exception as e:
+                    self.send_message_to_owner('Error code input %s %s' % (e.message,text))
+
+        if text.startswith(u'/a') or text.startswith(u'/а') or text.startswith(u',о'):
+            if self.logined and chat_id == self.chat_id:
+                try:
+                    raw_text = text.replace(u'/a', '').replace(u'/а', '').replace(u',о', '').strip()
+                    answers = raw_text.split(' ')
+                    result_str = ''
+                    for a in answers:
+                        print(a)
+                        lr = self.en_watcher.input_answer(a)
+                        if lr and lr['success']:
+                            result_str += '"%s"%s ' % (a, '+' if lr['correct'] else '-')
+                    self.send_message(result_str)
+                except Exception as e:
+                    self.send_message_to_owner('Error code input %s %s' % (e.message,text))
+
+        if text.startswith(u'/s') or text.startswith(u',п'):
+            if self.logined and chat_id == self.chat_id:
+                try:
+                    raw_text = text.replace(u'/s', '').replace(u',п', '').strip()
+                    lr = self.en_watcher.input_answer(raw_text)
+                    if lr and lr['success']:
+                        self.send_message('"%s"%s ' % (raw_text, '+' if lr['correct'] else '-'))
+                except Exception as e:
+                    self.send_message_to_owner('Error code input %s %s' % (e.message,text))
+
+        if text.startswith(u'/b') or text.startswith(u',б'):
+            if self.logined and chat_id == self.chat_id:
+                try:
+                    raw_text = text.replace(u'/b', '').replace(u',б', '').strip()
+                    lr = self.en_watcher.input_bonus_answer(raw_text)
+                    if lr and lr['success']:
+                        self.send_message('"%s"%s ' % (raw_text, '+' if lr['correct'] else '-'))
+                except Exception as e:
+                    self.send_message_to_owner('Error code input %s %s' % (e.message,text))
+
+        if text.startswith(u'/r') or text.startswith(u',з'):
+            self.add_to_storage(msg)
+
+        if text.startswith(u'/memory'):
+            if self.logined and self.chat_id:
+                if len(self.storage):
+                    self.get_storage()
+                else:
+                    self.send_message(u'Ничего не помню')
+
+        if text.startswith(u'/photos'):
+            if self.logined and self.chat_id:
+                if len(self.storage):
+                    self.get_storage()
+                else:
+                    self.send_message(u'Нет фоток на этом уровне')
 
         print(user_sent)
         # self.chat_id=msg.message.chat_id
@@ -143,7 +255,7 @@ class Messenger:
     def _run_updater(self):
         self.updater_enabled = True
         self.updater = threading.Thread(target=self.get_messages)
-        self.updater.run()
+        self.updater.start()
 
     def _stop_updater(self):
         self.updater_enabled = False
