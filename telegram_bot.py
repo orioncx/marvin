@@ -325,7 +325,7 @@ class Messenger:
                 except Exception as e:
                     self.send_message_to_owner('Error code input %s %s' % (e.message,text))
 
-        if text.startswith(u'/r') or text.startswith(u',з'):
+        if text.startswith(u'/r') or text.startswith(u',з') or text.startswith(u', з'):
             if msg:
                 self.add_to_storage(msg)
 
