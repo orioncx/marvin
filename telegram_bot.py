@@ -251,10 +251,10 @@ class Messenger:
                 self.send_message(r)
             return
 
-        if text.startswith(u'/s') or text.startswith(u',п') or text.startswith(u', п'):
+        if text.startswith(u'/s') or text.startswith(u'/п'):
             if self.logined and chat_id == self.chat_id:
                 try:
-                    raw_text = text.replace(u'/s', '').replace(u',п', '').replace(u', п', '').strip()
+                    raw_text = text.replace(u'/s', '').replace(u'/п', '').strip()
                     lr = self.en_watcher.input_answer(raw_text)
                     if lr and lr['success']:
                         self.send_message('"%s"%s ' % (raw_text, '+' if lr['correct'] else '-'))
@@ -262,7 +262,7 @@ class Messenger:
                     self.send_message_to_owner('Error code input %s %s' % (e.message,text))
             return
 
-        if text.startswith(u'/b') or text.startswith(u'.'):
+        if text.startswith(u'/b') or text.startswith(u'/б') or text.startswith(u'.'):
             if self.logined and chat_id == self.chat_id:
                 try:
                     if text.startswith(u'/b') or text.startswith(u'/б'):
@@ -276,11 +276,10 @@ class Messenger:
                     self.send_message_to_owner('Error code input %s %s' % (e.message,text))
             return
 
-        if text.startswith(u'/r') or text.startswith(u',з') or text.startswith(u', з'):
+        if text.startswith(u'/r') or text.startswith(u'/з'):
             if msg:
                 self.add_to_storage(msg)
             return
-
 
         if text.startswith(u'/c') or text.startswith(u'/с') or text.startswith(u','):
             if self.logined and chat_id == self.chat_id:
