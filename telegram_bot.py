@@ -207,7 +207,7 @@ class Messenger:
             if self.logined and self.chat_id:
                 self.send_message(u'\'/c\' или \',\' - вбитие кода\n'+\
                                   u'\'/b\' или \'.\' - вбитие бонуса на уровне с блокировкой\n'+\
-                                  u'\'/s\' или \',ц\' - вбитие кода с пробелами\n'+\
+                                  u'\'/s\' или \',п\' - вбитие кода с пробелами\n'+\
                                   u'\'/r\' или \',з\' - запомнить текст сообщения до конца уровня\n'+\
                                   u'пробел между командой и аргументом не обязателен'
                                   )
@@ -260,6 +260,7 @@ class Messenger:
                         self.send_message('"%s"%s ' % (raw_text, '+' if lr['correct'] else '-'))
                 except Exception as e:
                     self.send_message_to_owner('Error code input %s %s' % (e.message,text))
+            return
 
         if text.startswith(u'/b') or text.startswith(u'.'):
             if self.logined and chat_id == self.chat_id:
@@ -273,10 +274,12 @@ class Messenger:
                         self.send_message('"%s"%s ' % (raw_text, '+' if lr['correct'] else '-'))
                 except Exception as e:
                     self.send_message_to_owner('Error code input %s %s' % (e.message,text))
+            return
 
         if text.startswith(u'/r') or text.startswith(u',з') or text.startswith(u', з'):
             if msg:
                 self.add_to_storage(msg)
+            return
 
 
         if text.startswith(u'/c') or text.startswith(u'/с') or text.startswith(u','):
@@ -298,6 +301,7 @@ class Messenger:
                     self.send_message(result_str)
                 except Exception as e:
                     self.send_message_to_owner(u'Error code input %s %s' % (e.message,text))
+            return
 
 
     def _run_updater(self):
