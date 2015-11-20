@@ -8,7 +8,7 @@ from conf import HEADERS
 from lxml import html
 import threading
 
-BLOCK_MSG = u"ВНИМАНИЕ, на уровне блокировка! Вбитие через /c и ,к отключено. Используйте '/b' ',б' для бонусов или '/a' ',о' для ответа. '/s' и ',ц' без изменений"
+BLOCK_MSG = u"ВНИМАНИЕ, на уровне блокировка!"
 
 s = requests.Session()
 

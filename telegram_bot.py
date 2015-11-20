@@ -271,39 +271,42 @@ class Messenger:
                 self.send_message(r)
             return
 
-        if text.startswith(u'/c') or text.startswith(u'/с') or text.startswith(u',к') or text.startswith(u', к'):
+        if text.startswith(u'/c') or text.startswith(u'/с') or text.startswith(u','):
             if self.logined and chat_id == self.chat_id:
                 try:
-                    raw_text = text.replace(u'/c', '').replace(u'/с', '').replace(u',к', '').replace(u', к', '').strip()
+                    if text.startswith(u'/c') or text.startswith(u'/с'):
+                        raw_text = text[2:].strip()
+                    else:
+                        raw_text = text[1:].strip()
                     answers = raw_text.split(' ')
                     result_str = ''
                     for a in answers:
                         if a.lower() in self.en_watcher.l.closed_sectors:
-                            result_str += '"%s" %s' % (a, '\[:||||:]')
+                            result_str += u'"%s" %s' % (a, '\[:||||:]')
                         else:
-                            lr = self.en_watcher.input_answer(a, check_block=True)
+                            lr = self.en_watcher.input_answer(a, check_block=False)
                             if lr and lr['success']:
-                                result_str += '"%s"%s ' % (a, '+' if lr['correct'] else '-')
+                                result_str += u'"%s"%s ' % (a, '+' if lr['correct'] else '-')
                     self.send_message(result_str)
                 except Exception as e:
-                    self.send_message_to_owner('Error code input %s %s' % (e.message,text))
+                    self.send_message_to_owner(u'Error code input %s %s' % (e.message,text))
 
-        if text.startswith(u'/a') or text.startswith(u'/а') or text.startswith(u',о') or text.startswith(u', о'):
-            if self.logined and chat_id == self.chat_id:
-                try:
-                    raw_text = text.replace(u'/a', '').replace(u'/а', '').replace(u',о', '').replace(u', о', '').strip()
-                    answers = raw_text.split(' ')
-                    result_str = ''
-                    for a in answers:
-                        if a.lower() in self.en_watcher.l.closed_sectors:
-                            result_str += '"%s"%s ' % (a, '[:||||:]')
-                        else:
-                            lr = self.en_watcher.input_answer(a)
-                            if lr and lr['success']:
-                                result_str += '"%s"%s ' % (a, '+' if lr['correct'] else '-')
-                    self.send_message(result_str)
-                except Exception as e:
-                    self.send_message_to_owner('Error code input %s %s' % (e.message,text))
+        # if text.startswith(u'/a') or text.startswith(u'/а') or text.startswith(u',о') or text.startswith(u', о'):
+        #     if self.logined and chat_id == self.chat_id:
+        #         try:
+        #             raw_text = text.replace(u'/a', '').replace(u'/а', '').replace(u',о', '').replace(u', о', '').strip()
+        #             answers = raw_text.split(' ')
+        #             result_str = ''
+        #             for a in answers:
+        #                 if a.lower() in self.en_watcher.l.closed_sectors:
+        #                     result_str += '"%s"%s ' % (a, '[:||||:]')
+        #                 else:
+        #                     lr = self.en_watcher.input_answer(a)
+        #                     if lr and lr['success']:
+        #                         result_str += '"%s"%s ' % (a, '+' if lr['correct'] else '-')
+        #             self.send_message(result_str)
+        #         except Exception as e:
+        #             self.send_message_to_owner('Error code input %s %s' % (e.message,text))
 
         if text.startswith(u'/s') or text.startswith(u',п') or text.startswith(u', п'):
             if self.logined and chat_id == self.chat_id:
@@ -315,10 +318,13 @@ class Messenger:
                 except Exception as e:
                     self.send_message_to_owner('Error code input %s %s' % (e.message,text))
 
-        if text.startswith(u'/b') or text.startswith(u',б') or text.startswith(u', б'):
+        if text.startswith(u'/b') or text.startswith(u'.'):
             if self.logined and chat_id == self.chat_id:
                 try:
-                    raw_text = text.replace(u'/b', '').replace(u',б', '').replace(u', б', '').strip()
+                    if text.startswith(u'/b') or text.startswith(u'/б'):
+                        raw_text = text[2:].strip()
+                    else:
+                        raw_text = text[1:].strip()
                     lr = self.en_watcher.input_bonus_answer(raw_text)
                     if lr and lr['success']:
                         self.send_message('"%s"%s ' % (raw_text, '+' if lr['correct'] else '-'))
