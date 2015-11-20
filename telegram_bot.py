@@ -132,7 +132,7 @@ class Messenger:
         chat_id = msg.message.chat_id
         self.last_update_id = msg.update_id
 
-        if text.startswith(u'/') or text.startswith(u','):
+        if text.startswith(u'/') or text.startswith(u',') or text.startswith(u'.'):
             pass
         else:
             if msg.message.photo:
