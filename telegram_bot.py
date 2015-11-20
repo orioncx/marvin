@@ -49,6 +49,8 @@ class Messenger:
 
         self.en_watcher = None
 
+        self.bonus_notify = False
+
         self._run_updater()
 
         self.storage=[]
@@ -89,6 +91,7 @@ class Messenger:
         except TelegramError:
             if msg:
                 try:
+                    print(msg)
                     self.bot.sendMessage(chat_id=chat_id or self.chat_id, text=msg)
                 except:
                     self.send_message_to_owner(u'cant send message')
@@ -242,10 +245,23 @@ class Messenger:
                 self.send_message(r)
             return
 
+        if text.startswith(u'/bonus_notify_on'):
+            if self.logined and self.chat_id:
+                self.bonus_notify = True
+                self.send_message(u'Включил слежение за бонусами')
+            return
+
+        if text.startswith(u'/bonus_notify_off'):
+            if self.logined and self.chat_id:
+                self.bonus_notify = False
+                self.send_message(u'Выключил слежение за бонусами')
+            return
+
         if text.startswith(u'/bonuses'):
             if self.logined and self.chat_id:
                 if len(self.en_watcher.l.closed_bonuses):
-                    r = '\n'.join(self.en_watcher.l.closed_bonuses)
+                    r = '\n'.join([u"%s: %s" % (closed_bonus[0], closed_bonus[1]) for closed_bonus in
+                                   self.en_watcher.l.closed_bonuses])
                 else:
                     r = u'На уровне нет открытых бонусов.'
                 self.send_message(r)

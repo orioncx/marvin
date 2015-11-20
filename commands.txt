@@ -1,0 +1,10 @@
+photos - Фото этого уровня
+memory - /r сообщения
+clearqueue - Очистка очереди вбития
+task - Задание
+timers - Все таймеры
+hints - Подсказки
+bonuses - Открытые бонусы
+bonus_notify_on - Cлежение за бонусами вкл.
+bonus_notify_off - Cлежение за бонусами выкл.
+help - Помощь
